@@ -12,13 +12,18 @@
         <meta-data
             android:name="com.google.android.nearby.messages.API_KEY"
             android:value="AIzaSyDocmTo9Uz87mv5wttDG2qsWmLfnXzb8Bg" />
-        <activity android:name="com.wolandsoft.wahrest.activity.MainActivity">
+        <activity android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".service.CoreMonitorService"
+            android:description="@string/core_monitor_service_name"
+            android:label="@string/core_monitor_service_name" />
     </application>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 </manifest>
