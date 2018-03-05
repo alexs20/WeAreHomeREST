@@ -16,4 +16,12 @@
 <resources>
     <item name="pref_service_enabled_key" translatable="false" type="string">service_enabled</item>
     <item name="pref_service_enabled_value" translatable="false" type="bool">true</item>
+
+    <item name="pref_home_pin_key" translatable="false" type="string">home_pin</item>
+
+    <item name="pref_wifi_ssid_key" translatable="false" type="string">wifi_ssid</item>
+
+    <item name="pref_first_in_rest_api_key" translatable="false" type="string">first_in_rest_api</item>
+
+    <item name="pref_last_out_rest_api_key" translatable="false" type="string">last_out_rest_api</item>
 </resources>

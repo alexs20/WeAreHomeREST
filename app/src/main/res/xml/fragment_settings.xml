@@ -23,4 +23,23 @@
         android:title="@string/label_service_enabled"
         android:summary="@string/desc_service_enabled" />
 
+    <android.support.v7.preference.EditTextPreference
+        android:key="@string/pref_home_pin_key"
+        android:title="@string/label_home_pin"
+        android:summary="@string/desc_home_pin" />
+
+    <android.support.v7.preference.EditTextPreference
+        android:key="@string/pref_wifi_ssid_key"
+        android:title="@string/label_wifi_ssid"
+        android:summary="@string/desc_wifi_ssid" />
+
+    <android.support.v7.preference.EditTextPreference
+        android:key="@string/pref_first_in_rest_api_key"
+        android:title="@string/label_first_in_rest"
+        android:summary="@string/desc_first_in_rest" />
+
+    <android.support.v7.preference.EditTextPreference
+        android:key="@string/pref_last_out_rest_api_key"
+        android:title="@string/label_last_out_rest"
+        android:summary="@string/desc_last_out_rest" />
 </android.support.v7.preference.PreferenceScreen>

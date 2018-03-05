@@ -141,9 +141,6 @@ public class CoreMonitorService extends Service {
         builder.setContentIntent(contentIntent);
         builder.setWhen(0);
         builder.setOngoing(true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            builder.setPriority(Notification.PRIORITY_LOW);
-        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel
             CharSequence name = getString(R.string.app_name);
@@ -161,6 +158,11 @@ public class CoreMonitorService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
             builder.setLocalOnly(true);
         }
-        return builder.build();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            builder.setPriority(Notification.PRIORITY_LOW);
+            return builder.build();
+        } else {
+            return builder.getNotification();
+        }
     }
 }

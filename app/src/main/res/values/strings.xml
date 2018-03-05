@@ -16,11 +16,32 @@
     <string name="app_name">WeAreHomeREST</string>
     <string name="core_monitor_service_name">WeAreHomeREST Core Serice</string>
 
+    <string name="internal_exception_must_implement" translatable="false">%1$s must implement %2$s.</string>
+
     <string name="label_settings">Settings</string>
     <string name="label_open_drawer">Open Drawer</string>
     <string name="label_close_drawer">Close Drawer</string>
     <string name="label_options">Options</string>
     <string name="label_version">Version: %1$s.%2$s</string>
+    <string name="label_error">Error</string>
+
     <string name="label_service_enabled">Service Enabled</string>
     <string name="desc_service_enabled">Indicates current service state</string>
+
+    <string name="label_home_pin">Home PIN</string>
+    <string name="desc_home_pin">A PIN code shared between members</string>
+
+    <string name="label_wifi_ssid">Wifi SSID</string>
+    <string name="desc_wifi_ssid">Wifi SSID you are connecting to</string>
+
+    <string name="label_first_in_rest">First In REST API</string>
+    <string name="desc_first_in_rest">An URL to invoke when first member connects to WIFI</string>
+
+    <string name="label_last_out_rest">Last Out REST API</string>
+    <string name="desc_last_out_rest">An URL to invoke when last member disconnects from WIFI</string>
+
+    <string name="error_no_home_pin">Home PIN is missing</string>
+    <string name="error_no_wifi_ssid">Wifi SSID is missing</string>
+    <string name="error_no_first_in_rest">First in REST API URL is missing</string>
+    <string name="error_no_last_out_rest">Last out REST API URL is missing</string>
 </resources>
