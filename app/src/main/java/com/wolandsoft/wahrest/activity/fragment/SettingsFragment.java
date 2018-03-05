@@ -34,7 +34,7 @@ import com.wolandsoft.wahrest.common.KeySharedPreferences;
 import com.wolandsoft.wahrest.service.CoreMonitorService;
 import com.wolandsoft.wahrest.service.ServiceManager;
 
-public class SettingsFragment extends PreferenceFragmentCompat implements AlertDialogFragment.OnDialogToFragmentInteract{
+public class SettingsFragment extends PreferenceFragmentCompat implements AlertDialogFragment.OnDialogToFragmentInteract {
 
     private SwitchPreferenceCompat mChkServiceEnabled;
 
@@ -55,7 +55,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
                 if (isEnabled) {
                     SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(getContext());
                     KeySharedPreferences ksPref = new KeySharedPreferences(shPref, getContext());
-                    String homePin =ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
+                    String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
                     if (homePin == null || homePin.isEmpty()) {
                         FragmentTransaction transaction = getFragmentManager().beginTransaction();
                         DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
@@ -66,7 +66,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
                         fragment.show(transaction, DialogFragment.class.getName());
                         return false;
                     }
-                    String wifiSsid =ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
+                    String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
                     if (wifiSsid == null || wifiSsid.isEmpty()) {
                         FragmentTransaction transaction = getFragmentManager().beginTransaction();
                         DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
@@ -77,7 +77,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
                         fragment.show(transaction, DialogFragment.class.getName());
                         return false;
                     }
-                    String firstInREST =ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
+                    String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
                     if (firstInREST == null || firstInREST.isEmpty()) {
                         FragmentTransaction transaction = getFragmentManager().beginTransaction();
                         DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
@@ -88,7 +88,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
                         fragment.show(transaction, DialogFragment.class.getName());
                         return false;
                     }
-                    String lastOutREST =ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
+                    String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
                     if (lastOutREST == null || lastOutREST.isEmpty()) {
                         FragmentTransaction transaction = getFragmentManager().beginTransaction();
                         DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
@@ -120,7 +120,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
         super.onResume();
         SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         KeySharedPreferences ksPref = new KeySharedPreferences(shPref, getContext());
-        boolean isChecked =ksPref.getBoolean(R.string.pref_service_enabled_key, R.bool.pref_service_enabled_value) && ServiceManager.isServiceRunning(getContext(), CoreMonitorService.class);
+        boolean isChecked = ksPref.getBoolean(R.string.pref_service_enabled_key, R.bool.pref_service_enabled_value) && ServiceManager.isServiceRunning(getContext(), CoreMonitorService.class);
         mChkServiceEnabled.setChecked(isChecked);
     }
 

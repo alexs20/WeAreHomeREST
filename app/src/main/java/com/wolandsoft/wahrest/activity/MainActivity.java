@@ -1,11 +1,19 @@
 package com.wolandsoft.wahrest.activity;
 
 import android.Manifest;
+import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
@@ -18,6 +26,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.wolandsoft.wahrest.activity.fragment.SettingsFragment;
@@ -25,9 +35,13 @@ import com.wolandsoft.wahrest.activity.fragment.status.StatusFragment;
 import com.wolandsoft.wahrest.common.LogEx;
 import com.wolandsoft.wahrest.R;
 import com.wolandsoft.wahrest.service.CoreMonitorService;
+import com.wolandsoft.wahrest.service.PermissionsManager;
 import com.wolandsoft.wahrest.service.ServiceManager;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity implements
         FragmentManager.OnBackStackChangedListener,
@@ -35,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
+    private RelativeLayout mLayoutPermissions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,17 +57,26 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
 
         PreferenceManager.setDefaultValues(this, R.xml.fragment_settings, true);
+        ServiceManager.manageService(this, CoreMonitorService.class, true);
 
         if (savedInstanceState == null) {
             FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
             Fragment fragment = new StatusFragment();
             transaction.replace(R.id.content_fragment, fragment, StatusFragment.class.getName());
             transaction.commit();
-            ServiceManager.manageService(this, CoreMonitorService.class, true);
         }
 
         //Listen for changes in the back stack
         getSupportFragmentManager().addOnBackStackChangedListener(this);
+
+        mLayoutPermissions = (RelativeLayout) findViewById(R.id.layoutPermissions);
+        Button btnPermissions = (Button) findViewById(R.id.btnPermissions);
+        btnPermissions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PermissionsManager.requestPermission(MainActivity.this);
+            }
+        });
 
         //drawer
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -202,5 +226,14 @@ public class MainActivity extends AppCompatActivity implements
         //This method is called when the up button is pressed. Just the pop back stack.
         getSupportFragmentManager().popBackStack();
         return true;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        boolean askForPermissions = !PermissionsManager.sPermissionGranted(this);
+        mDrawerLayout.setVisibility(askForPermissions ? View.GONE : View.VISIBLE);
+        mLayoutPermissions.setVisibility(askForPermissions ? View.VISIBLE : View.GONE);
     }
 }

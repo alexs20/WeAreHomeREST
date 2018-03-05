@@ -15,6 +15,7 @@
 */
 package com.wolandsoft.wahrest.service;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -26,6 +27,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -37,12 +39,18 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.preference.PreferenceManager;
 
 import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.MessageListener;
 import com.wolandsoft.wahrest.R;
 import com.wolandsoft.wahrest.activity.MainActivity;
+import com.wolandsoft.wahrest.activity.fragment.AlertDialogFragment;
+import com.wolandsoft.wahrest.activity.fragment.SettingsFragment;
+import com.wolandsoft.wahrest.common.KeySharedPreferences;
 import com.wolandsoft.wahrest.common.LogEx;
 
 import java.lang.reflect.Field;
@@ -54,9 +62,27 @@ public class CoreMonitorService extends Service {
     private BroadcastReceiver mReceiver;
     MessageListener mMessageListener;
     Message mMessage;
+
+    @SuppressLint("StringFormatInvalid")
     @Override
     public void onCreate() {
         super.onCreate();
+
+        SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(this);
+        KeySharedPreferences ksPref = new KeySharedPreferences(shPref, this);
+        String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
+        String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
+        String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
+        String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
+        if (homePin == null || homePin.isEmpty() || wifiSsid == null || wifiSsid.isEmpty() || firstInREST == null || firstInREST.isEmpty()
+                || lastOutREST == null || lastOutREST.isEmpty()) {
+            LogEx.d("Incomplete configuration");
+            this.stopSelf();
+            return;
+        }
+
+
+
         mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {

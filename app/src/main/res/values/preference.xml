@@ -24,4 +24,6 @@
     <item name="pref_first_in_rest_api_key" translatable="false" type="string">first_in_rest_api</item>
 
     <item name="pref_last_out_rest_api_key" translatable="false" type="string">last_out_rest_api</item>
+
+    <item name="pref_permission_asked_type_key" translatable="false" type="string">permission_asked_type</item>
 </resources>

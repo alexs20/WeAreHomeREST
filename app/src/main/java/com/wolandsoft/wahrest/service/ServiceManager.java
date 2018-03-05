@@ -15,6 +15,7 @@
 */
 package com.wolandsoft.wahrest.service;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -26,6 +27,7 @@ import android.content.Intent;
  * @author Alexander Shulgin
  */
 public class ServiceManager {
+
     public static boolean isServiceRunning(Context context, Class serviceClass) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {

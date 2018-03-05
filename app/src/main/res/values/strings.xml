@@ -44,4 +44,7 @@
     <string name="error_no_wifi_ssid">Wifi SSID is missing</string>
     <string name="error_no_first_in_rest">First in REST API URL is missing</string>
     <string name="error_no_last_out_rest">Last out REST API URL is missing</string>
+
+    <string name="message_permissions_required">This application requires additional permissions to be granted.</string>
+    <string name="label_request_permissions">Request Permissions</string>
 </resources>
