@@ -28,19 +28,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.preference.PreferenceManager;
 
 import com.google.android.gms.nearby.Nearby;
@@ -48,13 +42,8 @@ import com.google.android.gms.nearby.messages.Message;
 import com.google.android.gms.nearby.messages.MessageListener;
 import com.wolandsoft.wahrest.R;
 import com.wolandsoft.wahrest.activity.MainActivity;
-import com.wolandsoft.wahrest.activity.fragment.AlertDialogFragment;
-import com.wolandsoft.wahrest.activity.fragment.SettingsFragment;
 import com.wolandsoft.wahrest.common.KeySharedPreferences;
 import com.wolandsoft.wahrest.common.LogEx;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public class CoreMonitorService extends Service {
     private final int SERVICE_NOTIFICATION_ID = 1;
@@ -63,6 +52,8 @@ public class CoreMonitorService extends Service {
     MessageListener mMessageListener;
     Message mMessage;
 
+    private boolean mIsHomeWifiConnected = false;
+
     @SuppressLint("StringFormatInvalid")
     @Override
     public void onCreate() {
@@ -70,48 +61,44 @@ public class CoreMonitorService extends Service {
 
         SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(this);
         KeySharedPreferences ksPref = new KeySharedPreferences(shPref, this);
-        String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
-        String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
-        String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
-        String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
-        if (homePin == null || homePin.isEmpty() || wifiSsid == null || wifiSsid.isEmpty() || firstInREST == null || firstInREST.isEmpty()
-                || lastOutREST == null || lastOutREST.isEmpty()) {
+        final String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
+        final String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
+        final String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
+        final String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
+        if (homePin == null || homePin.isEmpty()
+                || wifiSsid == null || wifiSsid.isEmpty()
+                || firstInREST == null || firstInREST.isEmpty()
+                || lastOutREST == null || lastOutREST.isEmpty()
+                || !PermissionsManager.sPermissionGranted(this)) {
             LogEx.d("Incomplete configuration");
             this.stopSelf();
             return;
         }
 
-
-
         mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                LogEx.d(intent.getAction());
-                for(String key : intent.getExtras().keySet()) {
-                    LogEx.d("..", key, " ", intent.getExtras().get(key));
-                }
-                if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals (intent.getAction())) {
+                if (WifiManager.SUPPLICANT_STATE_CHANGED_ACTION.equals(intent.getAction())) {
                     WifiManager wifiManager = (WifiManager) CoreMonitorService.this.getSystemService(Context.WIFI_SERVICE);
-                    WifiInfo wifiInfo  = wifiManager.getConnectionInfo();
+                    WifiInfo wifiInfo = wifiManager.getConnectionInfo();
                     if (wifiInfo.getSupplicantState() == SupplicantState.COMPLETED) {
                         String ssid = wifiInfo.getSSID();
-                        LogEx.d(ssid);
+                        LogEx.d("SSID ", ssid);
+                        if (wifiSsid.equals(ssid) && !mIsHomeWifiConnected) {
+                            mIsHomeWifiConnected = true;
+                            onHomeWifiConnected();
+                        }
+                    } else if (wifiInfo.getSupplicantState() == SupplicantState.DISCONNECTED) {
+                        LogEx.d("SSID ---");
+                        if (mIsHomeWifiConnected) {
+                            mIsHomeWifiConnected = false;
+                            onHomeWifiDisconnected();
+                        }
                     }
-//                    NetworkInfo netInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-//                    LogEx.d(netInfo.getState(), netInfo.getType(), netInfo.getExtraInfo(), netInfo.isConnected());
-//                    if (ConnectivityManager.TYPE_WIFI == netInfo.getType()) {
-//
-//                        WifiManager wifiManager = (WifiManager) CoreMonitorService.this.getSystemService(Context.WIFI_SERVICE);
-//                        WifiInfo info = wifiManager.getConnectionInfo();
-//                        String ssid = info.getSSID();
-//                        LogEx.d(ssid);
-//                    }
                 }
             }
         };
-        IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);//NETWORK_STATE_CHANGED_ACTION);//WIFI_STATE_CHANGED_ACTION);
-        //filter.addAction("android.net.wifi.WIFI_STATE_CHANGED");
-        //filter.addAction("android.net.wifi.STATE_CHANGE");
+        IntentFilter filter = new IntentFilter(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         registerReceiver(mReceiver, filter);
 
         mMessageListener = new MessageListener() {
@@ -141,9 +128,15 @@ public class CoreMonitorService extends Service {
 
     @Override
     public void onDestroy() {
-        unregisterReceiver(mReceiver);
-        Nearby.getMessagesClient(this).unpublish(mMessage);
-        Nearby.getMessagesClient(this).unsubscribe(mMessageListener);
+        if (mReceiver != null) {
+            unregisterReceiver(mReceiver);
+        }
+        if (mMessage != null) {
+            Nearby.getMessagesClient(this).unpublish(mMessage);
+        }
+        if (mMessageListener != null) {
+            Nearby.getMessagesClient(this).unsubscribe(mMessageListener);
+        }
         super.onDestroy();
     }
 
@@ -190,5 +183,13 @@ public class CoreMonitorService extends Service {
         } else {
             return builder.getNotification();
         }
+    }
+
+    private void onHomeWifiConnected() {
+        LogEx.d("onHomeWifiConnected()");
+    }
+
+    private void onHomeWifiDisconnected() {
+        LogEx.d("onHomeWifiDisconnected()");
     }
 }

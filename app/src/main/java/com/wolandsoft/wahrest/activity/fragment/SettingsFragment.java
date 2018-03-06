@@ -15,6 +15,7 @@
 */
 package com.wolandsoft.wahrest.activity.fragment;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -31,12 +32,17 @@ import android.view.View;
 
 import com.wolandsoft.wahrest.R;
 import com.wolandsoft.wahrest.common.KeySharedPreferences;
+import com.wolandsoft.wahrest.common.LogEx;
 import com.wolandsoft.wahrest.service.CoreMonitorService;
 import com.wolandsoft.wahrest.service.ServiceManager;
-
-public class SettingsFragment extends PreferenceFragmentCompat implements AlertDialogFragment.OnDialogToFragmentInteract {
+@SuppressLint("StringFormatInvalid")
+public class SettingsFragment extends PreferenceFragmentCompat implements
+        AlertDialogFragment.OnDialogToFragmentInteract,
+        SharedPreferences.OnSharedPreferenceChangeListener{
 
     private SwitchPreferenceCompat mChkServiceEnabled;
+
+    SharedPreferences mSharedPreferences;
 
     @Override
     public void onAttach(Context context) {
@@ -46,86 +52,108 @@ public class SettingsFragment extends PreferenceFragmentCompat implements AlertD
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         setPreferencesFromResource(R.xml.fragment_settings, rootKey);
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
 
         mChkServiceEnabled = (SwitchPreferenceCompat) findPreference(getString(R.string.pref_service_enabled_key));
         mChkServiceEnabled.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 boolean isEnabled = (Boolean) newValue;
-                if (isEnabled) {
-                    SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-                    KeySharedPreferences ksPref = new KeySharedPreferences(shPref, getContext());
-                    String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
-                    if (homePin == null || homePin.isEmpty()) {
-                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                        DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
-                                R.string.label_error, R.string.error_no_home_pin, false, null);
-                        fragment.setCancelable(true);
-                        fragment.setTargetFragment(SettingsFragment.this, 0); //response is going to be ignored
-                        transaction.addToBackStack(null);
-                        fragment.show(transaction, DialogFragment.class.getName());
-                        return false;
-                    }
-                    String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
-                    if (wifiSsid == null || wifiSsid.isEmpty()) {
-                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                        DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
-                                R.string.label_error, R.string.error_no_wifi_ssid, false, null);
-                        fragment.setCancelable(true);
-                        fragment.setTargetFragment(SettingsFragment.this, 0); //response is going to be ignored
-                        transaction.addToBackStack(null);
-                        fragment.show(transaction, DialogFragment.class.getName());
-                        return false;
-                    }
-                    String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
-                    if (firstInREST == null || firstInREST.isEmpty()) {
-                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                        DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
-                                R.string.label_error, R.string.error_no_first_in_rest, false, null);
-                        fragment.setCancelable(true);
-                        fragment.setTargetFragment(SettingsFragment.this, 0); //response is going to be ignored
-                        transaction.addToBackStack(null);
-                        fragment.show(transaction, DialogFragment.class.getName());
-                        return false;
-                    }
-                    String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
-                    if (lastOutREST == null || lastOutREST.isEmpty()) {
-                        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                        DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
-                                R.string.label_error, R.string.error_no_last_out_rest, false, null);
-                        fragment.setCancelable(true);
-                        fragment.setTargetFragment(SettingsFragment.this, 0); //response is going to be ignored
-                        transaction.addToBackStack(null);
-                        fragment.show(transaction, DialogFragment.class.getName());
-                        return false;
-                    }
-                }
-                ServiceManager.manageService(getContext(), CoreMonitorService.class, isEnabled);
-                return true;
+                return revalidateService(isEnabled);
             }
         });
+    }
+
+    private boolean revalidateService(boolean isServiceEnabled) {
+        ServiceManager.manageService(getContext(), CoreMonitorService.class, false);
+        if(isServiceEnabled) {
+            Integer errMsgId = validateSettings(R.string.pref_home_pin_key, R.string.pref_wifi_ssid_key,
+                    R.string.pref_first_in_rest_api_key, R.string.pref_last_out_rest_api_key);
+            if (errMsgId == null) {
+                ServiceManager.manageService(getContext(), CoreMonitorService.class, true);
+            } else {
+                FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                DialogFragment fragment = AlertDialogFragment.newInstance(R.mipmap.img24dp_error,
+                        R.string.label_error, errMsgId, false, null);
+                fragment.setCancelable(true);
+                fragment.setTargetFragment(SettingsFragment.this, 0); //response is going to be ignored
+                transaction.addToBackStack(null);
+                fragment.show(transaction, DialogFragment.class.getName());
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Integer validateSettings(int ...keys) {
+        KeySharedPreferences ksPref = new KeySharedPreferences(mSharedPreferences, getContext());
+        for(int key : keys) {
+            switch (key){
+                case R.string.pref_home_pin_key:
+                    String homePin = ksPref.getString(R.string.pref_home_pin_key, (Integer) null);
+                    if (homePin == null || homePin.isEmpty()) {
+                        return R.string.error_no_home_pin;
+                    }
+                    break;
+                case R.string.pref_wifi_ssid_key:
+                    String wifiSsid = ksPref.getString(R.string.pref_wifi_ssid_key, (Integer) null);
+                    if (wifiSsid == null || wifiSsid.isEmpty()) {
+                        return R.string.error_no_wifi_ssid;
+                    }
+                    break;
+                case R.string.pref_first_in_rest_api_key:
+                    String firstInREST = ksPref.getString(R.string.pref_first_in_rest_api_key, (Integer) null);
+                    if (firstInREST == null || firstInREST.isEmpty()) {
+                        return R.string.error_no_first_in_rest;
+                    }
+                    break;
+                case R.string.pref_last_out_rest_api_key:
+                    String lastOutREST = ksPref.getString(R.string.pref_last_out_rest_api_key, (Integer) null);
+                    if (lastOutREST == null || lastOutREST.isEmpty()) {
+                        return R.string.error_no_last_out_rest;
+                    }
+                    break;
+            }
+        }
+        return null;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ActionBar actionBar = ((AppCompatActivity) getActivity()).getSupportActionBar();
-        if (actionBar != null)
+        if (actionBar != null) {
             actionBar.setTitle(R.string.label_settings);
+        }
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
-        SharedPreferences shPref = PreferenceManager.getDefaultSharedPreferences(getContext());
-        KeySharedPreferences ksPref = new KeySharedPreferences(shPref, getContext());
+        KeySharedPreferences ksPref = new KeySharedPreferences(mSharedPreferences, getContext());
         boolean isChecked = ksPref.getBoolean(R.string.pref_service_enabled_key, R.bool.pref_service_enabled_value) && ServiceManager.isServiceRunning(getContext(), CoreMonitorService.class);
         mChkServiceEnabled.setChecked(isChecked);
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    public void onPause() {
+        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
     }
 
     @Override
     public void onDialogResult(int requestCode, int result, Bundle args) {
 
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        KeySharedPreferences ksPref = new KeySharedPreferences(mSharedPreferences, getContext());
+        boolean isChecked = ksPref.getBoolean(R.string.pref_service_enabled_key, R.bool.pref_service_enabled_value);
+        if (!revalidateService(isChecked)) {
+            mChkServiceEnabled.setChecked(false);
+        }
     }
 }
